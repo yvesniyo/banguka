@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Parking;
-
+use Validator;
 class ParkingsController extends Controller
 {
     public function index()
@@ -15,7 +15,16 @@ class ParkingsController extends Controller
     public function postParkings(Request $request)
     {
         //
-        return Parking::create($request);
+        $validator = Validator::make($request->all(), [ 
+            'names' => 'required', 
+            'address' => 'required', 
+            'user_id' => 'required', 
+        ]);
+        if ($validator->fails()) { 
+            return response()->json(['error'=>$validator->errors()], 401);            
+        }
+        $values = array_except($request->all(), ['_token']);
+        return Parking::create($values);
     }
 
     public function getOneParking($id)
