@@ -16,10 +16,12 @@ class Authenticate extends Middleware
    
     protected function redirectTo($request)
     {
+        
         if (! $request->expectsJson()) {
             return route('errorHandleUnauthorized',['status'=>401]);
-        }else{
-            return route('errorHandleUnauthorized',['status'=>200]);
         }
+        // else{
+        //     return route('errorHandleUnauthorized',['status'=>200]);
+        // }
     }
 }
