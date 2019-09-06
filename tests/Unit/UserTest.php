@@ -15,8 +15,13 @@ class UserTest extends TestCase
      */
     public function testExample()
     {
+        
+        $this->assertDatabaseHas('users', [
+            'email' => 'niyobuhungiro.yves@gmail.com',
+        ]);
         $response = $this->get('/');
-
         $response->assertStatus(200);
     }
+
+
 }
