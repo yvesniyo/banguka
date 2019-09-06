@@ -14,7 +14,7 @@ class Parking extends Migration
     public function up()
     {
         //
-        Schema::create('parking', function (Blueprint $table) {
+        Schema::create('parkings', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string("names")->nullable();
             $table->string("address")->nullable();

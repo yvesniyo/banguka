@@ -30,6 +30,16 @@ Route::middleware(["auth"])->prefix("admin")->group(function(){
     Route::delete("/parkingAdmins/{id}","AdminController@deleteParkingAdmins")->name("deleteParkingAdmins");
     // Ending Manage Parking Admins
 
+    // Starting Manage Parkings Buildings
+
+    Route::get("/parkings","ParkingsController@index")->name("getAllParkings");
+    Route::get("/parking/{id}","ParkingsController@getOneParking")->name("getOneParking");
+    Route::post("/parkings","ParkingsController@postParkings")->name("postParkings");
+    Route::put("/parkings/{id}","ParkingsController@updateParkings")->name("updateParkings");
+    Route::delete("/parkings/{id}","ParkingsController@deleteParking")->name("deleteParkings");
+
+    // Ending Manage Parkings Buildings
+
 });
 
 Route::group(["prefix"=>"/parkingAdmin"],function(){
