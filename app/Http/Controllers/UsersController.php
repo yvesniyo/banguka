@@ -28,8 +28,12 @@ class UsersController extends Controller
         return response()->json(['success'=>$success], $this-> successStatus); 
     }
     public function login(){ 
+        $userLoginId = Users::where("email","=",request('email'))->limit(1)->get();
+        if(isset($userLoginId[0]->id)){
+            $lastLogins = \DB::table("oauth_access_tokens")->where("user_id","=",$userLoginId[0]->id)->update(['revoked' => 1]);
+        }
         if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){ 
-            $user = Auth::user(); 
+            $user = Auth::user();
             $success['token'] =  $user->createToken('MyApp')-> accessToken; 
             return response()->json(['success' => $success], $this-> successStatus); 
         }else{ 
@@ -37,7 +41,12 @@ class UsersController extends Controller
         } 
     }
     public function logout(){
-        Auth::logout();
+        if (Auth::check()) {
+            Auth::user()->token()->revoke();
+            return response()->json(["status"=>200,"message"=>"User successfuly logout"],200);
+         }else{
+            return response()->json(["status"=>400,"message"=>"Bad Request"],400);
+         }
     }
     public function details(Request $request) 
     { 

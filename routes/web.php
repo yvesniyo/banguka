@@ -30,35 +30,8 @@ Route::middleware(["auth"])->prefix("admin")->group(function(){
     Route::delete("/parkingAdmins/{id}","AdminController@deleteParkingAdmins")->name("deleteParkingAdmins");
     // Ending Manage Parking Admins
 
-    // Starting Manage Parkings Buildings
-
-    Route::get("/parkings","ParkingsController@index")->name("getAllParkings");
-    Route::get("/parking/{id}","ParkingsController@getOneParking")->name("getOneParking");
-    Route::post("/parkings","ParkingsController@postParkings")->name("postParkings");
-    Route::put("/parkings/{id}","ParkingsController@updateParkings")->name("updateParkings");
-    Route::delete("/parkings/{id}","ParkingsController@deleteParking")->name("deleteParkings");
-
-    // Ending Manage Parkings Buildings
 
 });
-
-Route::group(["prefix"=>"/parkingAdmin"],function(){
-
-    Route::get("/",function(){
-        return "parkingAdmin HomePage";
-    })->name("parkingAdmin.home")->middleware("auth");
-
-});
-
-Route::group(["prefix"=>"/parkingAgent"],function(){
-
-    Route::get("/",function(){
-        $user = Auth::user();
-        return ["Page"=>"parkingAgent HomePage","User"=>$user];
-    })->name("parkingAgent.home");
-
-});
-
 
 Auth::routes();
 Route::get('/home', 'HomeController@index')->name('home');
