@@ -27,17 +27,17 @@ class UsersController extends Controller
         $success['name'] =  $user->name;
         return response()->json(['success'=>$success], $this-> successStatus); 
     }
-    public function login(){ 
+    public function login(Request $request){ 
         $userLoginId = Users::where("email","=",request('email'))->limit(1)->get();
         if(isset($userLoginId[0]->id)){
             $lastLogins = \DB::table("oauth_access_tokens")->where("user_id","=",$userLoginId[0]->id)->update(['revoked' => 1]);
         }
         if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){ 
             $user = Auth::user();
-            $success['token'] =  $user->createToken('MyApp')-> accessToken; 
-            return response()->json(['success' => $success], $this-> successStatus); 
+            $success['token'] = "Bearer ".$user->createToken('MyApp')-> accessToken; 
+            return response()->json(['status' => "ok", "token"=> $success["token"]], $this-> successStatus); 
         }else{ 
-            return response()->json(['error'=>'Unauthorised'], 401); 
+            return response()->json(['error'=>'Unauthorised'. json_encode($request->all())], 200); 
         } 
     }
     public function logout(){
@@ -50,10 +50,6 @@ class UsersController extends Controller
     }
     public function details(Request $request) 
     { 
-
-        return $request->user();
-        //return "Welcome";
-        $user = Auth::user();
-        return response()->json( ['success' => $user,"Status "=> $this->successStatus]); 
+        return $request->user();       
     } 
 }

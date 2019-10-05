@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
 // });
 
 
-Route::get('/login', 'UsersController@login');
+Route::post('/login', 'UsersController@login');
 Route::post('/register', 'UsersController@register');
 Route::get("/logout","UsersController@logout")->middleware("auth:api");
 
@@ -29,9 +29,12 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('questions', 'QuestionsController@showAll');
     Route::get('questions/{offset}/{numbers}','QuestionsController@retrieveInPacket');
     Route::get('questions/max','QuestionsController@maximumQuestions');
+    Route::post("questions/update/{id}","QuestionsController@update");
+    
+    Route::post("image/store","QuestionsController@store");
 
 });
 
 Route::get('/error/{status}', function($status){
-    return ["status"=>$status, "message"=>"Unauthorized Request"];
+    return response()->json(["status"=>401,"message"=>"Unauthorized"], 401);
 })->name("errorHandleUnauthorized");
