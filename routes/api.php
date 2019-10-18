@@ -33,7 +33,25 @@ Route::group(['middleware' => 'auth:api'], function(){
     
     Route::post("image/store","QuestionsController@store");
 
+
+    Route::post("exams/store","ExamController@store");
+    Route::get("exams/list","ExamController@list");
+
+    Route::get("/charts/users/{time}","UsersController@chart");// TODO change to ChartsController
+    Route::get("/charts/sms/{time}","ChartsController@chart");// TODO
+    Route::get("/charts/questions/{time}","ChartsController@chart");// TODO
+    Route::get("/charts/income/{time}","ChartsController@chart");// TODO
+
+    Route::post("/students/store", "StudentsController@store");
+    Route::get("/students/list", "StudentsController@list");
+
+
+    Route::get("/packages/generate", "StudentPackageController@store");
+
 });
+
+Route::get("/quiz/generate", "QuizGeneratorController@index");
+
 
 Route::get('/error/{status}', function($status){
     return response()->json(["status"=>401,"message"=>"Unauthorized"], 401);

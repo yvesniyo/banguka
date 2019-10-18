@@ -21,10 +21,23 @@ class Users extends Migration
             $table->string("email")->nullable()->unique();
             $table->string("password")->nullable();
             $table->string("level")->nullable();
+            $table->string("teacher")->nullable();
             $table->string("name")->nullable();
+            $table->string("status")->nullable();
+            $table->string("phone")->nullable();
+            $table->string("whatsapp")->nullable();
+            $table->string("intake_date")->nullable();
+            $table->string("expire_date")->nullable();
+            $table->string("student_code")->nullable();
             $table->string('api_token')->unique()
                         ->nullable()
                         ->default(null);
+            $table->string('referrer')
+                        ->nullable()
+                        ->default(null);
+            $table->string('package_id')
+                        ->default(1);
+
             $table->timestamps();
         });
     }

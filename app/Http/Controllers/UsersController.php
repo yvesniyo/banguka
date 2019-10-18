@@ -5,9 +5,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Users;
 use Validator;
+use Carbon\Carbon;
 class UsersController extends Controller
 {
     public $successStatus = 200;
+    public static $groupBy ="m-d-Y";
 
     public function register(Request $request) 
     { 
@@ -52,4 +54,24 @@ class UsersController extends Controller
     { 
         return $request->user();       
     } 
+
+
+    public function chart($type){
+        if($type == "m"){
+            self::$groupBy = "MMMM";
+        }else if($type == "y"){
+            self::$groupBy = "y";
+        }
+        $users = Users::where("id","!=",0)->orderBy("created_at");
+        $users = $users->get()->groupBy(function($val){
+            return Carbon::parse($val->created_at)->isoFormat(self::$groupBy);
+        });
+
+        $usersCount = $users->map(function($items, $key){
+            return collect($items)->count();
+        });
+
+
+        return response()->json(["status"=>200,"message"=>"ok", "users"=> $usersCount],200);
+    }
 }
