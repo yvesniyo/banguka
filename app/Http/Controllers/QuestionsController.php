@@ -5,12 +5,31 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Validator;
 use App\Questions;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+use Illuminate\Support\Facades\Cache;
+
 class QuestionsController extends Controller
 {
     //
-
+    
+    public $questions="";
     public function showAll(){
-        return Questions::all();
+
+        
+        // return Cache::remember("questionsNew", (1*60*10), function(){
+            return Questions::all().",";
+        // }); 
+
+        return $responseData;
+        $reponse = new StreamedResponse(function(){
+            Questions::chunk(20, function($questions){
+                $handle = fopen("php://output","w");
+                fputs($handle, $questions.",");
+                fclose($handle);
+            });            
+        });
+        return $reponse;
     }
     public function retrieveInPacket($offset = 0, $numbers = 1){
         $from = $offset * 10;

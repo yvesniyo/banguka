@@ -9,14 +9,148 @@ use App\Exam;
 use Illuminate\Support\Facades\Auth; 
 use App\NotificationType;
 use App\Notification;
+use App\Questions;
 use Carbon\Carbon;
+use App\Mark;
+use App\ActivityTiming;
+
+use Illuminate\Support\Facades\Cache;
 class ExamController extends Controller
 {
 
+    public $notificationExams;
     public function list(){
         $user_id = Auth::user()->id;
         $exams = User::find(1)->exams;
         return response()->json(["status"=>200,"message"=>"ok","exam"=> $exams], 200);
+    }
+
+    public function studentExamWorkPlace(User $student,Exam $exam){
+        $examQuestions = json_decode($exam->questions);
+
+        $submited = Mark::where([
+            ['exam_id', $exam->id],
+            ['user_id', $student->id]
+        ])->exists();
+
+        if($submited){
+            return response()->json(["status"=>400,"message"=>"You have done this exam already!!!"], 200);
+        }
+
+        $timing = ActivityTiming::where([
+            ['exam_id', $exam->id],
+            ['student_id', $student->id]
+        ]);
+
+        if(!$timing->exists()){
+            $timing = ActivityTiming::create(["exam_id"=> $exam->id,
+             "starting_time"=> Carbon::now(),
+             "student_id" => $student->id
+             ]);
+        }else{
+            $timing = $timing->first();
+        }
+        
+
+
+        $exam = Questions::whereIn("id", $examQuestions)->selectRaw("id, title,choices")->get();
+        
+
+        return response()->json([
+            "status"=>200,
+            "message"=>"ok",
+            "starting_time"=> $timing->starting_time,
+            "exam"=> $exam
+        ], 200);
+
+    }
+
+    public function studentExamReview(User $student,Exam $exam){
+
+        $student_done_this_exam = \App\Mark::where([
+            ['exam_id', $exam->id],
+            ['user_id', $student->id]
+        ])->exists();
+
+        $marks = Exam::where("notifications_id", $exam->notifications_id)
+            ->leftJoin("marks","exams.id","=","marks.exam_id")
+            ->selectRaw("exams.id, exams.created_at ,marks.answers,marks.pass,marks.result as results,title,questions,marks.id as marks_id, marks.user_id as student_id")
+            ->first();
+        $studentAnswers = json_decode($marks->answers, true);
+
+        $examQuestions = json_decode($exam->questions);
+
+        $questionsAndAnswers = Questions::whereIn("id", $examQuestions)->selectRaw('id,answer as correctAnswer,choices,title')->get();
+
+        foreach ($questionsAndAnswers as $questionAndAnswer) {
+            $question_id = $questionAndAnswer->id;
+            if(isset($studentAnswers[$question_id])){
+                $questionAndAnswer->student_answer = $studentAnswers[$question_id];
+                $questionAndAnswer->isAnswered = true;
+                if($studentAnswers[$question_id] == $questionAndAnswer->correctAnswer){
+                    $questionAndAnswer->isItCorrect = true;
+                }else{
+                    $questionAndAnswer->isItCorrect = false;                    
+                }
+            }else{
+                $questionAndAnswer->student_answer = null;
+                $questionAndAnswer->isAnswered = false;
+                $questionAndAnswer->isItCorrect = null;  
+            }
+            $questionAndAnswer->correctAnswer = $questionAndAnswer->correctAnswer + 0;
+        }
+        return response()->json(["message"=>"Exam Review","status"=>200,"submited"=> $student_done_this_exam, "marks"=> $marks->results+0 ,"review"=>$questionsAndAnswers], 200);           
+    }
+
+    public function studentExam(User $student){
+        if($student->level != "3"){
+            return response()->json(["message"=>"Page Not Found","status"=>404], 404);           
+        }
+        $notification_type_id =  NotificationType::where("name","=","exam")->first()->id;
+        $notifications = Notification::where("notification_type_id","=", $notification_type_id)->select("id","people_to_notify")->get();
+        
+        $this->notificationExams = array();
+        foreach ($notifications as $notification) {
+            $people_to_notify = json_decode($notification->people_to_notify);
+            if(in_array($student->id, $people_to_notify)){
+                $this->notificationExams[] = $notification->id;
+            }
+        }
+
+        // $exams = Cache::remember('exams', (1000*60*5), function () {
+        $exams = Exam::whereIn("notifications_id", $this->notificationExams)
+            ->leftJoin("marks","exams.id","=","marks.exam_id")
+            ->where("marks.user_id","=", $student->id)
+            ->selectRaw("exams.id, exams.created_at ,marks.answers,marks.pass,marks.result as results,title,questions,marks.id as marks_id, marks.user_id as student_id")
+            ->get();
+        // });
+        foreach ($exams as $exam) {
+            if($exam->student_id == null){
+                $exam->attend = false;
+                $exam->pass = "N/A";
+                $exam->results = "N/A";
+                $exam->resultsLevel = "N/A";
+                $exam->resultsPercentage = "N/A";
+            }else{
+                $exam->attend = true;
+                $totalQuestions = count(json_decode($exam->questions));
+                $results = $exam->results * 100/ $totalQuestions;
+                if($results >= 60){
+                    $exam->resultsLevel = "Pass";
+                }else{
+                    $exam->resultsLevel = "Failed";
+                }
+                $exam->resultsPercentage = $results;
+            }
+        }
+        
+
+        return response()->json(["message"=>"exams","status"=>200, "exams"=>$exams], 200);           
+
+    }
+
+    public function generate(){
+        
     }
     public function store(Request $request){
 
@@ -33,7 +167,8 @@ class ExamController extends Controller
 
         $notification_type_id =  NotificationType::where("name","=","exam")->first()->id;
         $students_of_this_teacher = User::where("teacher","=",$teacher_id)->pluck("id");
-        $people_to_notify = json_encode($students_of_this_teacher);
+        $students_level = \App\UserType::where("name","=","student")->get()->first()->id;
+        $people_to_notify = json_encode(User::where("level","=",$students_level)->pluck("id"));
         $people_notified = json_encode([]);
 
         $notificationData["notification_type_id"] = $notification_type_id;

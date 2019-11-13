@@ -22,6 +22,13 @@ Route::post('/login', 'UsersController@login');
 Route::post('/register', 'UsersController@register');
 Route::get("/logout","UsersController@logout")->middleware("auth:api");
 
+Route::get("/student/{student}/exams","ExamController@studentExam");
+
+Route::get("/student/{student}/exams/{exam}/review","ExamController@studentExamReview");
+Route::get("/student/{student}/exams/{exam}/workplace","ExamController@studentExamWorkPlace");
+Route::post("/student/{student}/exams/{exam}/workplace/submit","MarkController@store");
+
+
 Route::group(['middleware' => 'auth:api'], function(){
     Route::get('details', 'UsersController@details');
 
@@ -46,11 +53,14 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get("/students/list", "StudentsController@list");
 
 
-    Route::get("/packages/generate", "StudentPackageController@store");
+    
 
 });
 
+Route::get("/packages/generate", "StudentPackageController@store");
+
 Route::get("/quiz/generate", "QuizGeneratorController@index");
+Route::get("/exam/generate", "ExamController@generate");
 
 
 Route::get('/error/{status}', function($status){
