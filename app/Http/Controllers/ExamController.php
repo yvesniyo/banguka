@@ -117,23 +117,19 @@ class ExamController extends Controller
             }
         }
 
-        // $exams = Cache::remember('exams', (1000*60*5), function () {
-        $exams = Exam::whereIn("notifications_id", $this->notificationExams)
-            ->leftJoin("marks","exams.id","=","marks.exam_id")
-            ->where("marks.user_id","=", $student->id)
-            ->selectRaw("exams.id, exams.created_at ,marks.answers,marks.pass,marks.result as results,title,questions,marks.id as marks_id, marks.user_id as student_id")
-            ->get();
-        // });
-        foreach ($exams as $exam) {
-            if($exam->student_id == null){
-                $exam->attend = false;
-                $exam->pass = "N/A";
-                $exam->results = "N/A";
-                $exam->resultsLevel = "N/A";
-                $exam->resultsPercentage = "N/A";
-            }else{
+        $allExamsDoneByUser = Exam::whereIn("notifications_id", $this->notificationExams)->orderBy("created_at","DESC")->get();
+        $allMarksForUser = Mark::where("user_id",$student->id)->get();
+        $newMarks = array();
+        foreach ($allMarksForUser as $marks) {
+            $newMarks[$marks->exam_id] = $marks;
+        }
+        foreach ($allExamsDoneByUser as $exam) {
+            if(isset($newMarks[$exam->id])){
+                $marks = $newMarks[$exam->id];
                 $exam->attend = true;
+                $exam->pass = $marks->pass;
                 $totalQuestions = count(json_decode($exam->questions));
+                $exam->results = $marks->result;
                 $results = $exam->results * 100/ $totalQuestions;
                 if($results >= 60){
                     $exam->resultsLevel = "Pass";
@@ -141,11 +137,23 @@ class ExamController extends Controller
                     $exam->resultsLevel = "Failed";
                 }
                 $exam->resultsPercentage = $results;
+                $exam->answers = $marks->answers;
+                $exam->marks_id = $marks->id;
+                $exam->student_id = $marks->user_id;
+                $exam->marks_exam_id = $marks->exam_id;
+            }else{
+                $exam->attend = false;
+                $exam->pass = "N/A";
+                $exam->results = "N/A";
+                $exam->resultsLevel = "N/A";
+                $exam->resultsPercentage = "N/A";
+                $exam->marks_id = null;
+                $exam->student_id = null;
+                $exam->marks_exam_id = null;
             }
         }
-        
-
-        return response()->json(["message"=>"exams","status"=>200, "exams"=>$exams], 200);           
+        $newMarks = null;
+        return response()->json(["message"=>"exams","status"=>200, "exams"=>$allExamsDoneByUser], 200);           
 
     }
 

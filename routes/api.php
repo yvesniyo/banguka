@@ -22,8 +22,8 @@ Route::post('/login', 'UsersController@login');
 Route::post('/register', 'UsersController@register');
 Route::get("/logout","UsersController@logout")->middleware("auth:api");
 
+Route::post("/students/create-account", "StudentsController@createSimpleAccount");
 Route::get("/student/{student}/exams","ExamController@studentExam");
-
 Route::get("/student/{student}/exams/{exam}/review","ExamController@studentExamReview");
 Route::get("/student/{student}/exams/{exam}/workplace","ExamController@studentExamWorkPlace");
 Route::post("/student/{student}/exams/{exam}/workplace/submit","MarkController@store");
@@ -50,6 +50,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get("/charts/income/{time}","ChartsController@chart");// TODO
 
     Route::post("/students/store", "StudentsController@store");
+    Route::post("/students/profile/update", "StudentsController@update");
     Route::get("/students/list", "StudentsController@list");
 
 

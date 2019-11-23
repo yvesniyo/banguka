@@ -30,18 +30,25 @@ class UsersController extends Controller
         return response()->json(['success'=>$success], $this-> successStatus); 
     }
     public function login(Request $request){ 
-        $userLoginId = Users::where("email","=",request('email'))->limit(1)->get();
-        if(isset($userLoginId[0]->id)){
-            $lastLogins = \DB::table("oauth_access_tokens")->where("user_id","=",$userLoginId[0]->id)->update(['revoked' => 1]);
+        $identity = $request->all()["email"];
+        $userLoginId = Users::where(
+            filter_var($identity, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone',
+            "=", $identity)->first();
+        if(isset($userLoginId->id)){
+            $lastLogins = \DB::table("oauth_access_tokens")->where("user_id","=",$userLoginId->id)->update(['revoked' => 1]);
         }
-        if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){ 
+        if(Auth::attempt([
+            filter_var($identity, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone' => $identity,
+            'password' => request('password')])){ 
             $user = Auth::user();
             $success['token'] = "Bearer ".$user->createToken('MyApp')-> accessToken; 
+            $user->last_login = Carbon::now();
+            $user->save();
             return response()->json([
                 'status' => "ok",
                 "token"=> $success["token"],
                 "user" => $user],
-                $this-> successStatus); 
+                $this->successStatus); 
         }else{ 
             return response()->json(['error'=>'Unauthorised'. json_encode($request->all())], 200); 
         } 

@@ -29,6 +29,8 @@ class Users extends Migration
             $table->string("intake_date")->nullable();
             $table->string("expire_date")->nullable();
             $table->string("student_code")->nullable();
+            $table->string("profile_image")->nullable();
+            $table->string("last_login")->nullable();
             $table->string('api_token')->unique()
                         ->nullable()
                         ->default(null);
