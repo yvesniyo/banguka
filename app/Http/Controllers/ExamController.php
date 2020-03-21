@@ -108,7 +108,6 @@ class ExamController extends Controller
         }
         $notification_type_id =  NotificationType::where("name","=","exam")->first()->id;
         $notifications = Notification::where("notification_type_id","=", $notification_type_id)->select("id","people_to_notify")->get();
-        
         $this->notificationExams = array();
         foreach ($notifications as $notification) {
             $people_to_notify = json_decode($notification->people_to_notify);
@@ -116,7 +115,6 @@ class ExamController extends Controller
                 $this->notificationExams[] = $notification->id;
             }
         }
-
         $allExamsDoneByUser = Exam::whereIn("notifications_id", $this->notificationExams)->orderBy("created_at","DESC")->get();
         $allMarksForUser = Mark::where("user_id",$student->id)->get();
         $newMarks = array();
